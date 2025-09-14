@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enhanced Data Pipeline Demo</title>
+<style>
+  body {
+    margin:0;
+    font-family:sans-serif;
+    background:#0f1724;
+    color:#fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  .container {
+    display:flex;
+    gap:30px;
+    align-items:center; /* vertical center for pipeline and log */
+    max-height:90vh;
+  }
+
+  .pipeline {
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:center;
+    position:relative;
+    max-height:90vh;
+  }
+
+  .stage {
+    text-align:center;
+    margin:16px 0; /* smaller margin */
+    padding:8px 16px; /* smaller padding */
+    border:1px dashed #334155;
+    border-radius:6px;
+    min-width:120px;
+    transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+    font-size:13px;
+  }
+
+  .stage.active {
+    border-color:#7c3aed;
+    box-shadow:0 0 15px rgba(124,58,237,0.5);
+    background: rgba(124,58,237,0.05);
+  }
+
+  .title {
+    margin-top:4px;
+    font-size:12px;
+    color:#94a3b8;
+  }
+
+  .arrow {
+    font-size:22px; /* smaller arrow */
+    color:#7c3aed;
+    text-shadow:0 0 4px #7c3aed,0 0 8px #a855f7;
+    margin:8px 0;
+    animation:arrowPulse 1.5s infinite;
+  }
+
+  #startBtn {
+    margin-top:16px;
+    padding:8px 16px;
+    border:none;
+    border-radius:6px;
+    background:#7c3aed;
+    color:#fff;
+    font-size:13px;
+    cursor:pointer;
+    box-shadow:0 0 8px #7c3aed;
+    transition:background 0.3s;
+  }
+
+  #startBtn:hover {
+    background:#a855f7;
+  }
+
+  .log-box {
+    background:rgba(255,255,255,0.05);
+    padding:12px;
+    border-radius:8px;
+    width:260px;
+    max-height:90vh;
+    overflow:auto;
+    box-shadow:inset 0 0 6px rgba(255,255,255,0.1);
+    display:flex;
+    flex-direction:column;
+    justify-content:center; /* vertical center */
+  }
+
+  .log-entry {
+    margin:4px 0;
+    font-size:12px;
+    color:#cbd5e1;
+    opacity:0;
+    animation:fadeIn 0.6s forwards;
+  }
+
+  .log-entry span {
+    color:#7c3aed;
+    font-weight:bold;
+  }
+
+  /* floating box */
+  .file-box {
+    width:50px;
+    height:50px;
+    border-radius:10px;
+    background:#1e293b;
+    position:absolute;
+    top:0;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    box-shadow:0 0 15px #7c3aed;
+    opacity:0;
+    transition: top 1s ease, opacity 0.4s ease;
+  }
+
+  .file-box.active {
+    opacity:1;
+  }
+
+  .file-box.glow {
+    animation:glowPulse 1.5s infinite;
+  }
+
+  .file-box.bounce {
+    animation:bounce 0.6s ease;
+  }
+
+  @keyframes glowPulse{
+    0%{box-shadow:0 0 8px #7c3aed}
+    50%{box-shadow:0 0 16px #a855f7,0 0 32px #a855f7}
+    100%{box-shadow:0 0 8px #7c3aed}
+  }
+
+  @keyframes bounce{
+    0%{transform:translateX(-50%) translateY(-8px)}
+    50%{transform:translateX(-50%) translateY(0)}
+    70%{transform:translateX(-50%) translateY(-3px)}
+    100%{transform:translateX(-50%) translateY(0)}
+  }
+
+  @keyframes arrowPulse{
+    0%,100%{opacity:.4}
+    50%{opacity:1}
+  }
+
+  @keyframes fadeIn{
+    to{opacity:1}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="pipeline" id="pipeline">
+    <div class="stage" data-stage="upload"><div class="title">Upload</div></div>
+    <div class="arrow">⬇</div>
+    <div class="stage" data-stage="validation"><div class="title">Validation</div></div>
+    <div class="arrow">⬇</div>
+    <div class="stage" data-stage="cleaning"><div class="title">Cleaning</div></div>
+    <div class="arrow">⬇</div>
+    <div class="stage" data-stage="analysis"><div class="title">Analysis</div></div>
+    <div class="arrow">⬇</div>
+    <div class="stage" data-stage="visualization"><div class="title">Visualization</div></div>
+    <div class="arrow">⬇</div>
+    <div class="stage" data-stage="reporting"><div class="title">Reporting</div></div>
+    <div style="text-align:center"><button id="startBtn">Start Demo</button></div>
+    <div class="file-box" id="fileBox">📄</div>
+  </div>
+  <div class="log-box" id="logBox">
+    <div><strong>Process Log:</strong></div>
+  </div>
+</div>
+
+<script>
+const stages=['upload','validation','cleaning','analysis','visualization','reporting'];
+const stageEmojis={upload:'📄',validation:'✅',cleaning:'🧹',analysis:'📊',visualization:'📈',reporting:'📑'};
+const messages={
+  upload:['File uploading...','File uploaded successfully!'],
+  validation:['Validating file...','Your file is validated ✅'],
+  cleaning:['Cleaning data...','Data cleaned 🧹'],
+  analysis:['Analyzing data...','Insights generated 📊'],
+  visualization:['Creating charts...','Visuals ready 📈'],
+  reporting:['Generating report...','Report generated 📑']
+};
+const stageDelay = {upload:1500, validation:2000, cleaning:1800, analysis:2500, visualization:2000, reporting:1500};
+
+const startBtn=document.getElementById('startBtn');
+const logBox=document.getElementById('logBox');
+const fileBox=document.getElementById('fileBox');
+
+function logMessage(msg){
+  const div=document.createElement('div');
+  div.className='log-entry';
+  div.innerHTML=msg;
+  logBox.appendChild(div);
+  logBox.scrollTop=logBox.scrollHeight;
+}
+
+function runDemo(){
+  startBtn.disabled=true;
+  let i=0;
+  logBox.innerHTML='<div><strong>Process Log:</strong></div>';
+  fileBox.style.top='0px';
+  fileBox.classList.add('active','glow');
+
+  function next(){
+    if(i<stages.length){
+      const stage=document.querySelector(`[data-stage="${stages[i]}"]`);
+      const rect=stage.getBoundingClientRect();
+      const parentRect=document.getElementById('pipeline').getBoundingClientRect();
+      const offset=rect.top - parentRect.top;
+      fileBox.textContent=stageEmojis[stages[i]];
+      fileBox.classList.remove('bounce');
+      void fileBox.offsetWidth;
+      fileBox.classList.add('bounce');
+      fileBox.style.top=offset+'px';
+
+      stage.classList.add('active');
+      logMessage(`<span>${messages[stages[i]][0]}</span>`);
+
+      setTimeout(()=>{
+        logMessage(messages[stages[i]][1]);
+        stage.classList.remove('active');
+        i++; next();
+      }, stageDelay[stages[i]]);
+    } else {
+      fileBox.textContent='🎉';
+      fileBox.classList.add('bounce');
+      startBtn.disabled=false;
+      startBtn.textContent='Restart Demo';
+    }
+  }
+
+  next();
+}
+
+startBtn.addEventListener('click', runDemo);
+</script>
+</body>
+</html>
